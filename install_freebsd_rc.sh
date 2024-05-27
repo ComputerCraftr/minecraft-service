@@ -34,17 +34,17 @@ TMUX_PATH=$(which tmux)
 MINECRAFT_COMMAND="$JAVA_PATH -Xmx$MEMORY_ALLOCATION -Xms$INITIAL_MEMORY -jar $MINECRAFT_JAR nogui"
 
 # Step 2: Create the Minecraft user and directory
-if ! id -u $MINECRAFT_USER >/dev/null 2>&1; then
+if ! id -u "$MINECRAFT_USER" >/dev/null 2>&1; then
     echo "Creating Minecraft user..."
-    sudo pw user add $MINECRAFT_USER -m -s /bin/sh -c "Minecraft Server User"
+    sudo pw user add "$MINECRAFT_USER" -m -s /bin/sh -c "Minecraft Server User"
 else
     echo "User $MINECRAFT_USER already exists."
 fi
 
 if [ ! -d "$MINECRAFT_DIR" ]; then
     echo "Creating Minecraft server directory..."
-    sudo mkdir -p $MINECRAFT_DIR
-    sudo chown -R $MINECRAFT_USER:$MINECRAFT_USER $MINECRAFT_DIR
+    sudo mkdir -p "$MINECRAFT_DIR"
+    sudo chown -R "$MINECRAFT_USER":"$MINECRAFT_USER" "$MINECRAFT_DIR"
 else
     echo "Minecraft server directory already exists."
 fi
@@ -52,10 +52,10 @@ fi
 # Step 3: Download Minecraft server jar if not in -nodownload mode
 if [ $NODOWNLOAD -eq 0 ]; then
     echo "Please enter the download URL for the Minecraft server jar:"
-    read DOWNLOAD_URL
+    read -r DOWNLOAD_URL
 
     echo "Downloading Minecraft server jar..."
-    if ! sudo -u $MINECRAFT_USER wget -O $MINECRAFT_DIR/$MINECRAFT_JAR $DOWNLOAD_URL; then
+    if ! sudo -u "$MINECRAFT_USER" wget -O "$MINECRAFT_DIR/$MINECRAFT_JAR" "$DOWNLOAD_URL"; then
         echo "Failed to download the Minecraft server jar. Exiting..."
         exit 1
     fi
@@ -65,11 +65,11 @@ fi
 
 # Step 4: Accept the Minecraft EULA
 echo "Accepting the Minecraft EULA..."
-sudo -u $MINECRAFT_USER sh -c "echo 'eula=true' > $MINECRAFT_DIR/eula.txt"
+sudo -u "$MINECRAFT_USER" sh -c "echo 'eula=true' > $MINECRAFT_DIR/eula.txt"
 
 # Step 5: Create the rc.d service script
 echo "Creating the rc.d service script..."
-sudo tee $SERVICE_SCRIPT >/dev/null <<EOF
+sudo tee "$SERVICE_SCRIPT" >/dev/null <<EOF
 #!/bin/sh
 
 # PROVIDE: minecraft
@@ -231,14 +231,14 @@ run_rc_command "\$1" "\$@"
 EOF
 
 # Make the service script executable
-sudo chmod +x $SERVICE_SCRIPT
+sudo chmod +x "$SERVICE_SCRIPT"
 
 # Enable the service
 sudo sysrc minecraft_enable="YES"
 
 # Step 6: Create the monitoring script
 echo "Creating the monitoring script..."
-sudo tee $MONITOR_SCRIPT >/dev/null <<EOF
+sudo tee "$MONITOR_SCRIPT" >/dev/null <<EOF
 #!/bin/sh
 
 # Check the status of the Minecraft server
@@ -252,11 +252,11 @@ fi
 EOF
 
 # Make the monitoring script executable
-sudo chmod +x $MONITOR_SCRIPT
+sudo chmod +x "$MONITOR_SCRIPT"
 
 # Step 7: Create the restart script
 echo "Creating the restart script..."
-sudo tee $RESTART_SCRIPT >/dev/null <<EOF
+sudo tee "$RESTART_SCRIPT" >/dev/null <<EOF
 #!/bin/sh
 
 echo "\$(date): Restarting Minecraft server..."
@@ -267,7 +267,7 @@ echo "\$(date): Minecraft server restarted."
 EOF
 
 # Make the restart script executable
-sudo chmod +x $RESTART_SCRIPT
+sudo chmod +x "$RESTART_SCRIPT"
 
 # Step 8: Set up cron jobs without creating duplicates
 echo "Setting up cron jobs..."
@@ -279,26 +279,26 @@ restart_cron="0 4 * * * $RESTART_SCRIPT >> /var/log/minecraft_restart.log 2>&1"
 temp_crontab=$(mktemp)
 
 # Copy existing crontab to temp file
-echo "$current_crontab" >$temp_crontab
+echo "$current_crontab" >"$temp_crontab"
 
 # Only add the monitor cron job if it doesn't already exist
-if ! grep -q "$MONITOR_SCRIPT" $temp_crontab; then
-    echo "$monitor_cron" >>$temp_crontab
+if ! grep -q "$MONITOR_SCRIPT" "$temp_crontab"; then
+    echo "$monitor_cron" >>"$temp_crontab"
 else
     echo "Monitor cron job already exists. Skipping..."
 fi
 
 # Only add the restart cron job if it doesn't already exist
-if ! grep -q "$RESTART_SCRIPT" $temp_crontab; then
-    echo "$restart_cron" >>$temp_crontab
+if ! grep -q "$RESTART_SCRIPT" "$temp_crontab"; then
+    echo "$restart_cron" >>"$temp_crontab"
 else
     echo "Restart cron job already exists. Skipping..."
 fi
 
 # Install the new crontab
-sudo crontab $temp_crontab
+sudo crontab "$temp_crontab"
 
 # Clean up
-rm $temp_crontab
+rm "$temp_crontab"
 
 echo "Setup complete. The Minecraft server will be managed as a service and monitored via cron jobs."
