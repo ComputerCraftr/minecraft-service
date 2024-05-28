@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Exit on errors and undefined variables
+set -eu
+
 # Configuration variables
 MINECRAFT_USER="minecraft"
 MINECRAFT_GROUP="minecraft"
@@ -27,6 +30,11 @@ echo "Installing necessary packages..."
 sudo apt-get update
 sudo apt-get install -y tmux openjdk-21-jdk-headless wget
 
+# Check if necessary commands are available
+command -v tmux >/dev/null 2>&1 || { echo "tmux is required but it's not installed. Aborting." >&2; exit 1; }
+command -v java >/dev/null 2>&1 || { echo "java is required but it's not installed. Aborting." >&2; exit 1; }
+command -v wget >/dev/null 2>&1 || { echo "wget is required but it's not installed. Aborting." >&2; exit 1; }
+
 # Step 2: Create the Minecraft user and directory
 if ! id -u "$MINECRAFT_USER" >/dev/null 2>&1; then
     echo "Creating Minecraft user..."
@@ -35,7 +43,7 @@ else
     echo "User $MINECRAFT_USER already exists."
 fi
 
-if ! grep -q "^$MINECRAFT_GROUP:" /etc/group; then
+if ! getent group "$MINECRAFT_GROUP" >/dev/null 2>&1; then
     sudo groupadd "$MINECRAFT_GROUP"
 fi
 
@@ -72,8 +80,8 @@ sudo cp minecraft_service.sh "$SERVICE_SH"
 # Make the minecraft_service.sh script executable
 sudo chmod +x "$SERVICE_SH"
 
-# Step 6: Create the systemd service script
-echo "Creating the systemd service script..."
+# Step 6: Create the systemd service unit
+echo "Creating the systemd service unit..."
 sudo tee "$SERVICE_SCRIPT" >/dev/null <<EOF
 [Unit]
 Description=Minecraft Server
@@ -93,19 +101,20 @@ RemainAfterExit=true
 WantedBy=multi-user.target
 EOF
 
-# Reload systemd and enable the Minecraft service
+# Step 7: Reload systemd and enable the service
+echo "Reloading systemd and enabling the Minecraft service..."
 sudo systemctl daemon-reload
 sudo systemctl enable minecraft.service
 
-# Step 7: Create the monitoring script
+# Step 8: Create the monitoring script
 echo "Creating the monitoring script..."
 sudo tee "$MONITOR_SCRIPT" >/dev/null <<EOF
 #!/bin/sh
 
 # Check the status of the Minecraft server
-if ! systemctl is-active --quiet minecraft; then
+if ! systemctl is-active --quiet minecraft.service; then
     echo "\$(date): Minecraft server is down. Restarting..."
-    systemctl start minecraft
+    systemctl start minecraft.service
     echo "\$(date): Minecraft server started."
 else
     echo "\$(date): Minecraft server is running."
@@ -115,20 +124,20 @@ EOF
 # Make the monitoring script executable
 sudo chmod +x "$MONITOR_SCRIPT"
 
-# Step 8: Create the restart script
+# Step 9: Create the restart script
 echo "Creating the restart script..."
 sudo tee "$RESTART_SCRIPT" >/dev/null <<EOF
 #!/bin/sh
 
 echo "\$(date): Restarting Minecraft server..."
-systemctl restart minecraft
+systemctl restart minecraft.service
 echo "\$(date): Minecraft server restarted."
 EOF
 
 # Make the restart script executable
 sudo chmod +x "$RESTART_SCRIPT"
 
-# Step 9: Set up cron jobs without creating duplicates
+# Step 10: Set up cron jobs without creating duplicates
 echo "Setting up cron jobs..."
 current_crontab=$(sudo crontab -l 2>/dev/null || true)
 
@@ -161,4 +170,4 @@ sudo crontab "$temp_crontab"
 rm "$temp_crontab"
 
 echo "Setup complete. The Minecraft server is installed, but it is not yet started."
-echo "You can start the Minecraft server with: sudo systemctl start minecraft"
+echo "You can start the Minecraft server with: sudo systemctl start minecraft.service"
