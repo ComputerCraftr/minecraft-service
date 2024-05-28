@@ -55,7 +55,7 @@ if [ $NODOWNLOAD -eq 0 ]; then
     read -r DOWNLOAD_URL
 
     echo "Downloading Minecraft server jar..."
-    if ! sudo -u "$MINECRAFT_USER" wget -O "$MINECRAFT_DIR/$MINECRAFT_JAR" "$DOWNLOAD_URL"; then
+    if ! su -m "$MINECRAFT_USER" -c "wget -O $MINECRAFT_DIR/$MINECRAFT_JAR $DOWNLOAD_URL"; then
         echo "Failed to download the Minecraft server jar. Exiting..."
         exit 1
     fi
@@ -65,7 +65,7 @@ fi
 
 # Step 4: Accept the Minecraft EULA
 echo "Accepting the Minecraft EULA..."
-sudo -u "$MINECRAFT_USER" sh -c "echo 'eula=true' > $MINECRAFT_DIR/eula.txt"
+su -m "$MINECRAFT_USER" -c "echo 'eula=true' > $MINECRAFT_DIR/eula.txt"
 
 # Step 5: Create the rc.d service script
 echo "Creating the rc.d service script..."
