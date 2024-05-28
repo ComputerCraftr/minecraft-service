@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Exit on errors and undefined variables
+set -eu
+
 # Configuration variables
 MINECRAFT_USER="minecraft"
 MINECRAFT_GROUP="minecraft"
@@ -27,6 +30,11 @@ echo "Installing necessary packages..."
 sudo pkg update
 sudo pkg install -y tmux openjdk22 wget
 
+# Check if necessary commands are available
+command -v tmux >/dev/null 2>&1 || { echo "tmux is required but it's not installed. Aborting." >&2; exit 1; }
+command -v java >/dev/null 2>&1 || { echo "java is required but it's not installed. Aborting." >&2; exit 1; }
+command -v wget >/dev/null 2>&1 || { echo "wget is required but it's not installed. Aborting." >&2; exit 1; }
+
 # Step 2: Create the Minecraft user and directory
 if ! id -u "$MINECRAFT_USER" >/dev/null 2>&1; then
     echo "Creating Minecraft user..."
@@ -35,7 +43,7 @@ else
     echo "User $MINECRAFT_USER already exists."
 fi
 
-if ! grep -q "^$MINECRAFT_GROUP:" /etc/group; then
+if ! getent group "$MINECRAFT_GROUP" >/dev/null 2>&1; then
     sudo pw groupadd "$MINECRAFT_GROUP"
 fi
 
@@ -106,13 +114,12 @@ extra_commands="log attach cmd reload"
 run_rc_command "\$1"
 EOF
 
-# Make the rc.d service script executable
+# Step 7: Make the rc.d service script executable and enable the service
+echo "Making the rc.d service script executable and enabling the Minecraft service..."
 sudo chmod +x "$SERVICE_SCRIPT"
-
-# Enable the service
 sudo sysrc minecraft_enable="YES"
 
-# Step 7: Create the monitoring script
+# Step 8: Create the monitoring script
 echo "Creating the monitoring script..."
 sudo tee "$MONITOR_SCRIPT" >/dev/null <<EOF
 #!/bin/sh
@@ -130,7 +137,7 @@ EOF
 # Make the monitoring script executable
 sudo chmod +x "$MONITOR_SCRIPT"
 
-# Step 8: Create the restart script
+# Step 9: Create the restart script
 echo "Creating the restart script..."
 sudo tee "$RESTART_SCRIPT" >/dev/null <<EOF
 #!/bin/sh
@@ -145,7 +152,7 @@ EOF
 # Make the restart script executable
 sudo chmod +x "$RESTART_SCRIPT"
 
-# Step 9: Set up cron jobs without creating duplicates
+# Step 10: Set up cron jobs without creating duplicates
 echo "Setting up cron jobs..."
 current_crontab=$(sudo crontab -l 2>/dev/null || true)
 
