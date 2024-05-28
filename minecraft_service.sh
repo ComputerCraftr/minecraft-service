@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Exit on errors and undefined variables
+set -eu
+
 # Configuration variables
 MINECRAFT_USER="minecraft"
 MINECRAFT_GROUP="minecraft"
@@ -9,8 +12,8 @@ MEMORY_ALLOCATION="2G"
 INITIAL_MEMORY="256M"
 TMUX_SOCKET="minecraft_socket"
 TMUX_SESSION="minecraft_session"
-TMUX_PATH=$(which tmux)
-JAVA_PATH=$(which java)
+TMUX_PATH=$(command -v tmux)
+JAVA_PATH=$(command -v java)
 PID_FILE="$MINECRAFT_DIR/minecraft_server.pid"
 MINECRAFT_COMMAND="$JAVA_PATH -Xmx$MEMORY_ALLOCATION -Xms$INITIAL_MEMORY -jar $MINECRAFT_JAR nogui"
 
@@ -19,7 +22,7 @@ run_as_minecraft_user() {
     if [ "$(id -u -n)" = "$MINECRAFT_USER" ]; then
         "$@"
     else
-        su -m $MINECRAFT_USER -c "$@"
+        su -m "$MINECRAFT_USER" -c "$*"
     fi
 }
 
