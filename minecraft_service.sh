@@ -17,7 +17,7 @@ MINECRAFT_COMMAND="$JAVA_PATH -Xmx$MEMORY_ALLOCATION -Xms$INITIAL_MEMORY -jar $M
 # Function to run a command as MINECRAFT_USER if the current user is not MINECRAFT_USER
 run_as_minecraft_user() {
     if [ "$(id -u -n)" = "$MINECRAFT_USER" ]; then
-        $@
+        "$@"
     else
         su -m $MINECRAFT_USER -c "$@"
     fi
@@ -34,11 +34,11 @@ minecraft_start() {
         run_as_minecraft_user "$TMUX_PATH -L $TMUX_SOCKET new-session -d -s $TMUX_SESSION -c $MINECRAFT_DIR $MINECRAFT_COMMAND"
         echo "Minecraft server started in detached tmux session '$TMUX_SESSION'."
         pid=$(run_as_minecraft_user "$TMUX_PATH -L $TMUX_SOCKET list-panes -t $TMUX_SESSION -F '#{pane_pid}'")
-        if [ "$(echo $pid | wc -l)" -ne 1 ]; then
+        if [ "$(echo "$pid" | wc -l)" -ne 1 ]; then
             echo "Could not determine PID, multiple active sessions"
             return 1
         fi
-        echo -n $pid > "$PID_FILE"
+        printf "%s" "$pid" > "$PID_FILE"
     else
         echo "A tmux session named '$TMUX_SESSION' is already running."
     fi
@@ -71,8 +71,7 @@ minecraft_stop() {
 
     # Issue the stop command
     echo "Stopping server..."
-    issue_cmd "stop"
-    if [ $? -ne 0 ]; then
+    if ! issue_cmd "stop"; then
         echo "Failed to send stop command to server"
         return 1
     fi
