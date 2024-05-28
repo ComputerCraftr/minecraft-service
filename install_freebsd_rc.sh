@@ -2,12 +2,14 @@
 
 # Configuration variables
 MINECRAFT_USER="minecraft"
+MINECRAFT_GROUP="minecraft"
 MINECRAFT_DIR="/var/minecraft_server"
 MINECRAFT_JAR="server.jar"
 SERVICE_SCRIPT="/usr/local/etc/rc.d/minecraft"
 SERVICE_SH="/usr/local/bin/minecraft_service.sh"
 MONITOR_SCRIPT="/usr/local/bin/minecraft_monitor.sh"
 RESTART_SCRIPT="/usr/local/bin/minecraft_restart.sh"
+PID_FILE="$MINECRAFT_DIR/minecraft_server.pid"
 
 # Check for -nodownload option
 NODOWNLOAD=0
@@ -33,10 +35,14 @@ else
     echo "User $MINECRAFT_USER already exists."
 fi
 
+if ! grep -q "^$MINECRAFT_GROUP:" /etc/group; then
+    sudo pw groupadd "$MINECRAFT_GROUP"
+fi
+
 if [ ! -d "$MINECRAFT_DIR" ]; then
     echo "Creating Minecraft server directory..."
     sudo mkdir -p "$MINECRAFT_DIR"
-    sudo chown -R "$MINECRAFT_USER":"$MINECRAFT_USER" "$MINECRAFT_DIR"
+    sudo chown -R "$MINECRAFT_USER":"$MINECRAFT_GROUP" "$MINECRAFT_DIR"
 else
     echo "Minecraft server directory already exists."
 fi
@@ -84,6 +90,7 @@ load_rc_config \$name
 
 : \${minecraft_enable:="NO"}
 : \${minecraft_user:="$MINECRAFT_USER"}
+: \${minecraft_group:="$MINECRAFT_GROUP"}
 : \${minecraft_dir:="$MINECRAFT_DIR"}
 : \${service_sh:="$SERVICE_SH"}
 
@@ -170,4 +177,5 @@ sudo crontab "$temp_crontab"
 # Clean up
 rm "$temp_crontab"
 
-echo "Setup complete. The Minecraft server will be managed as a service and monitored via cron jobs."
+echo "Setup complete. The Minecraft server is installed, but it is not yet started."
+echo "You can start the Minecraft server with: sudo service minecraft start"
