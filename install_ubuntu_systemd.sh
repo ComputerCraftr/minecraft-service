@@ -106,17 +106,46 @@ echo "Creating the systemd service unit..."
 sudo tee "$SERVICE_SCRIPT" >/dev/null <<EOF
 [Unit]
 Description=Minecraft Server
+
+Wants=network.target
 After=network.target
 
 [Service]
+Type=forking
 User=$MINECRAFT_USER
 Group=$MINECRAFT_GROUP
+Nice=5
+TimeoutStopSec=90
+
+ProtectHome=read-only
+ProtectSystem=strict
+PrivateDevices=yes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictRealtime=yes
+SystemCallFilter=@system-service
+
+MemoryMax=$MEMORY_ALLOCATION
+CPUQuota=200%
+IOReadBandwidthMax=/dev/sda 1G
+IOWriteBandwidthMax=/dev/sda 1G
+
+InaccessiblePaths=/
+ReadOnlyPaths=/etc /bin /sbin /usr /lib /lib64
+ReadWritePaths=$MINECRAFT_DIR
+
 WorkingDirectory=$MINECRAFT_DIR
-ExecStart=$SERVICE_SH start
-ExecStop=$SERVICE_SH stop
-ExecReload=$SERVICE_SH reload
 PIDFile=$PID_FILE
-RemainAfterExit=true
+ExecStart=$SERVICE_SH start
+ExecReload=$SERVICE_SH reload
+ExecStop=$SERVICE_SH stop
+
+Restart=on-failure
+RestartSec=10s
 
 [Install]
 WantedBy=multi-user.target
