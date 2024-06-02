@@ -37,20 +37,20 @@ command -v wget >/dev/null 2>&1 || {
     exit 1
 }
 
-# Step 2: Append necessary paths to the local configuration file
+# Step 2: Copy the configuration file
+echo "Copying the configuration file..."
+sudo cp "$LOCAL_CONFIG_FILE" "$CONFIG_FILE"
+sudo chown root:wheel "$CONFIG_FILE"
+sudo chmod 644 "$CONFIG_FILE"
+
+# Step 3: Append necessary paths to the configuration file
 echo "Appending necessary paths to the configuration file..."
 {
     echo 'SERVICE_SCRIPT="/usr/local/etc/rc.d/minecraft"'
     echo "TMUX_PATH=$(command -v tmux)"
     echo "JAVA_PATH=$(command -v java)"
     echo "MINECRAFT_COMMAND=\"\$JAVA_PATH -Xmx\$MEMORY_ALLOCATION -Xms\$INITIAL_MEMORY -jar \$MINECRAFT_JAR nogui\""
-} >>"$LOCAL_CONFIG_FILE"
-
-# Step 3: Copy the configuration file
-echo "Copying the configuration file..."
-sudo cp "$LOCAL_CONFIG_FILE" "$CONFIG_FILE"
-sudo chown root:wheel "$CONFIG_FILE"
-sudo chmod 644 "$CONFIG_FILE"
+} >>"$CONFIG_FILE"
 
 # Source the configuration file
 # shellcheck source=minecraft_config.sh
