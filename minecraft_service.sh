@@ -3,9 +3,12 @@
 # Exit on errors and undefined variables
 set -eu
 
+# Define the location of the config file
+CONFIG_FILE="/etc/minecraft_config.sh"
+
 # Source the configuration file
 # shellcheck source=minecraft_config.sh
-. /etc/minecraft_config.sh
+. "$CONFIG_FILE"
 
 # Function to run a command as MINECRAFT_USER if the current user is not MINECRAFT_USER
 run_as_minecraft_user() {
