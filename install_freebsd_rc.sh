@@ -132,7 +132,7 @@ cmd_cmd="\$service_sh cmd"
 reload_cmd="\$service_sh reload"
 extra_commands="log attach cmd reload"
 
-run_rc_command "\$1"
+run_rc_command "\$@"
 EOF
 
 # Step 9: Make the rc.d service script executable and enable the service
