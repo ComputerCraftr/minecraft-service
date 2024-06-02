@@ -3,19 +3,8 @@
 # Exit on errors and undefined variables
 set -eu
 
-# Configuration variables
-MINECRAFT_USER="minecraft"
-MINECRAFT_GROUP="minecraft"
-MINECRAFT_DIR="/var/minecraft_server"
-MINECRAFT_JAR="server.jar"
-MEMORY_ALLOCATION="2G"
-INITIAL_MEMORY="256M"
-TMUX_SOCKET="minecraft_socket"
-TMUX_SESSION="minecraft_session"
-TMUX_PATH=$(command -v tmux)
-JAVA_PATH=$(command -v java)
-PID_FILE="$MINECRAFT_DIR/minecraft_server.pid"
-MINECRAFT_COMMAND="$JAVA_PATH -Xmx$MEMORY_ALLOCATION -Xms$INITIAL_MEMORY -jar $MINECRAFT_JAR nogui"
+# Source the configuration file
+. /etc/minecraft_config.sh
 
 # Function to run a command as MINECRAFT_USER if the current user is not MINECRAFT_USER
 run_as_minecraft_user() {
