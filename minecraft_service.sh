@@ -4,6 +4,7 @@
 set -eu
 
 # Source the configuration file
+# shellcheck source=minecraft_config.sh
 . /etc/minecraft_config.sh
 
 # Function to run a command as MINECRAFT_USER if the current user is not MINECRAFT_USER

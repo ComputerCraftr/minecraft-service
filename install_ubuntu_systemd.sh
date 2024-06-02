@@ -53,6 +53,7 @@ sudo chown root:root "$CONFIG_FILE"
 sudo chmod 644 "$CONFIG_FILE"
 
 # Source the configuration file
+# shellcheck source=minecraft_config.sh
 . "$CONFIG_FILE"
 
 # Step 4: Create the Minecraft user and directory
