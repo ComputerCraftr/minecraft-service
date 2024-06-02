@@ -3,16 +3,9 @@
 # Exit on errors and undefined variables
 set -eu
 
-# Configuration variables
-MINECRAFT_USER="minecraft"
-MINECRAFT_GROUP="minecraft"
-MINECRAFT_DIR="/var/minecraft_server"
-MINECRAFT_JAR="server.jar"
-SERVICE_SCRIPT="/etc/systemd/system/minecraft.service"
-SERVICE_SH="/usr/local/bin/minecraft_service.sh"
-MONITOR_SCRIPT="/usr/local/bin/minecraft_monitor.sh"
-RESTART_SCRIPT="/usr/local/bin/minecraft_restart.sh"
-PID_FILE="$MINECRAFT_DIR/minecraft_server.pid"
+# Define the location of the config file
+CONFIG_FILE="/etc/minecraft_config.sh"
+LOCAL_CONFIG_FILE="minecraft_config.sh"
 
 # Check for -nodownload option
 NODOWNLOAD=0
@@ -31,11 +24,38 @@ sudo apt-get update
 sudo apt-get install -y tmux openjdk-21-jdk-headless wget
 
 # Check if necessary commands are available
-command -v tmux >/dev/null 2>&1 || { echo "tmux is required but it's not installed. Aborting." >&2; exit 1; }
-command -v java >/dev/null 2>&1 || { echo "java is required but it's not installed. Aborting." >&2; exit 1; }
-command -v wget >/dev/null 2>&1 || { echo "wget is required but it's not installed. Aborting." >&2; exit 1; }
+command -v tmux >/dev/null 2>&1 || {
+    echo "tmux is required but it's not installed. Aborting." >&2
+    exit 1
+}
+command -v java >/dev/null 2>&1 || {
+    echo "java is required but it's not installed. Aborting." >&2
+    exit 1
+}
+command -v wget >/dev/null 2>&1 || {
+    echo "wget is required but it's not installed. Aborting." >&2
+    exit 1
+}
 
-# Step 2: Create the Minecraft user and directory
+# Step 2: Append necessary paths to the local configuration file
+echo "Appending necessary paths to the configuration file..."
+{
+    echo 'SERVICE_SCRIPT="/etc/systemd/system/minecraft.service"'
+    echo "TMUX_PATH=$(command -v tmux)"
+    echo "JAVA_PATH=$(command -v java)"
+    echo 'MINECRAFT_COMMAND="$JAVA_PATH -Xmx$MEMORY_ALLOCATION -Xms$INITIAL_MEMORY -jar $MINECRAFT_JAR nogui"'
+} >>"$LOCAL_CONFIG_FILE"
+
+# Step 3: Copy the configuration file
+echo "Copying the configuration file..."
+sudo cp "$LOCAL_CONFIG_FILE" "$CONFIG_FILE"
+sudo chown root:root "$CONFIG_FILE"
+sudo chmod 644 "$CONFIG_FILE"
+
+# Source the configuration file
+. "$CONFIG_FILE"
+
+# Step 4: Create the Minecraft user and directory
 if ! id -u "$MINECRAFT_USER" >/dev/null 2>&1; then
     echo "Creating Minecraft user..."
     sudo useradd --system --home "$MINECRAFT_DIR" --shell /bin/sh "$MINECRAFT_USER"
@@ -55,7 +75,7 @@ else
     echo "Minecraft server directory already exists."
 fi
 
-# Step 3: Download Minecraft server jar if not in -nodownload mode
+# Step 5: Download Minecraft server jar if not in -nodownload mode
 if [ $NODOWNLOAD -eq 0 ]; then
     echo "Please enter the download URL for the Minecraft server jar:"
     read -r DOWNLOAD_URL
@@ -69,18 +89,18 @@ else
     echo "Skipping download of Minecraft server jar due to -nodownload option."
 fi
 
-# Step 4: Accept the Minecraft EULA
+# Step 6: Accept the Minecraft EULA
 echo "Accepting the Minecraft EULA..."
 su -m "$MINECRAFT_USER" -c "echo 'eula=true' > $MINECRAFT_DIR/eula.txt"
 
-# Step 5: Copy the minecraft_service.sh script
+# Step 7: Copy the minecraft_service.sh script
 echo "Copying the minecraft_service.sh script..."
 sudo cp minecraft_service.sh "$SERVICE_SH"
 
 # Make the minecraft_service.sh script executable
 sudo chmod +x "$SERVICE_SH"
 
-# Step 6: Create the systemd service unit
+# Step 8: Create the systemd service unit
 echo "Creating the systemd service unit..."
 sudo tee "$SERVICE_SCRIPT" >/dev/null <<EOF
 [Unit]
@@ -101,15 +121,18 @@ RemainAfterExit=true
 WantedBy=multi-user.target
 EOF
 
-# Step 7: Reload systemd and enable the service
+# Step 9: Reload systemd and enable the service
 echo "Reloading systemd and enabling the Minecraft service..."
 sudo systemctl daemon-reload
 sudo systemctl enable minecraft.service
 
-# Step 8: Create the monitoring script
+# Step 10: Create the monitoring script
 echo "Creating the monitoring script..."
 sudo tee "$MONITOR_SCRIPT" >/dev/null <<EOF
 #!/bin/sh
+
+# Source the configuration file
+. "$CONFIG_FILE"
 
 # Check the status of the Minecraft server
 if ! systemctl is-active --quiet minecraft.service; then
@@ -124,10 +147,13 @@ EOF
 # Make the monitoring script executable
 sudo chmod +x "$MONITOR_SCRIPT"
 
-# Step 9: Create the restart script
+# Step 11: Create the restart script
 echo "Creating the restart script..."
 sudo tee "$RESTART_SCRIPT" >/dev/null <<EOF
 #!/bin/sh
+
+# Source the configuration file
+. "$CONFIG_FILE"
 
 echo "\$(date): Restarting Minecraft server..."
 systemctl restart minecraft.service
@@ -137,7 +163,7 @@ EOF
 # Make the restart script executable
 sudo chmod +x "$RESTART_SCRIPT"
 
-# Step 10: Set up cron jobs without creating duplicates
+# Step 12: Set up cron jobs without creating duplicates
 echo "Setting up cron jobs..."
 current_crontab=$(sudo crontab -l 2>/dev/null || true)
 
