@@ -34,7 +34,7 @@ minecraft_start() {
             echo "Could not determine PID, multiple active sessions"
             return 1
         fi
-        printf "%s" "$pid" > "$PID_FILE"
+        printf "%s" "$pid" >"$PID_FILE"
     else
         echo "A tmux session named '$TMUX_SESSION' is already running."
     fi
@@ -99,8 +99,8 @@ minecraft_log() {
 
 minecraft_attach() {
     if session_running; then
-        run_as_minecraft_user "TERM=screen-256color $TMUX_PATH -L $TMUX_SOCKET attach -t $TMUX_SESSION.0" || \
-        run_as_minecraft_user "TERM=screen $TMUX_PATH -L $TMUX_SOCKET attach -t $TMUX_SESSION.0"
+        run_as_minecraft_user "TERM=screen-256color $TMUX_PATH -L $TMUX_SOCKET attach -t $TMUX_SESSION.0" ||
+            run_as_minecraft_user "TERM=screen $TMUX_PATH -L $TMUX_SOCKET attach -t $TMUX_SESSION.0"
     else
         echo "No tmux session named '$TMUX_SESSION' is running."
     fi
@@ -139,30 +139,30 @@ minecraft_status() {
 }
 
 case "$1" in
-    start)
-        minecraft_start
-        ;;
-    stop)
-        minecraft_stop
-        ;;
-    log)
-        minecraft_log
-        ;;
-    attach)
-        minecraft_attach
-        ;;
-    cmd)
-        shift
-        minecraft_cmd "$@"
-        ;;
-    reload)
-        minecraft_reload
-        ;;
-    status)
-        minecraft_status
-        ;;
-    *)
-        echo "Usage: $0 {start|stop|log|attach|cmd|reload|status}"
-        exit 2
-        ;;
+start)
+    minecraft_start
+    ;;
+stop)
+    minecraft_stop
+    ;;
+log)
+    minecraft_log
+    ;;
+attach)
+    minecraft_attach
+    ;;
+cmd)
+    shift
+    minecraft_cmd "$@"
+    ;;
+reload)
+    minecraft_reload
+    ;;
+status)
+    minecraft_status
+    ;;
+*)
+    echo "Usage: $0 {start|stop|log|attach|cmd|reload|status}"
+    exit 2
+    ;;
 esac
