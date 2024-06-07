@@ -13,7 +13,7 @@ CONFIG_FILE="/etc/minecraft_config.sh"
 # Function to run a command as MINECRAFT_USER if the current user is not MINECRAFT_USER
 run_as_minecraft_user() {
     if [ "$(id -u -n)" = "$MINECRAFT_USER" ]; then
-        "$@"
+        /bin/sh -c "$*"
     else
         su -m "$MINECRAFT_USER" -c "$*"
     fi
