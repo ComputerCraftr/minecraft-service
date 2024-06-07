@@ -59,7 +59,7 @@ echo "Appending necessary paths to the configuration file..."
 # Step 4: Create the Minecraft user and directory
 if ! id -u "$MINECRAFT_USER" >/dev/null 2>&1; then
     echo "Creating Minecraft user..."
-    sudo useradd --system --home "$MINECRAFT_DIR" --shell /bin/sh "$MINECRAFT_USER"
+    sudo adduser --system --home "$MINECRAFT_DIR" --shell /bin/sh --disabled-login --group --gecos "Minecraft Server User" "$MINECRAFT_USER"
 else
     echo "User $MINECRAFT_USER already exists."
 fi
