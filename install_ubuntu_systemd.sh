@@ -119,24 +119,21 @@ TimeoutStopSec=90
 
 ProtectHome=read-only
 ProtectSystem=strict
-PrivateDevices=yes
 NoNewPrivileges=yes
-PrivateTmp=yes
 ProtectKernelModules=yes
 ProtectKernelTunables=yes
 ProtectControlGroups=yes
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 RestrictRealtime=yes
 SystemCallFilter=@system-service
+PrivateDevices=yes
 
 MemoryMax=$MEMORY_ALLOCATION
-CPUQuota=200%
-IOReadBandwidthMax=/dev/sda 1G
-IOWriteBandwidthMax=/dev/sda 1G
 
-InaccessiblePaths=/
-ReadOnlyPaths=/etc /bin /sbin /usr /lib /lib64
-ReadWritePaths=$MINECRAFT_DIR
+# Adjust paths to allow access to /mnt for WSL DNS and /tmp + /utmp/wtmp for tmux
+InaccessiblePaths=/root /boot /run /sys /srv /media -/opt -/lost+found
+ReadOnlyPaths=/var /etc /bin /sbin /usr /lib /lib64 /proc -/mnt
+ReadWritePaths=/var/run/utmp /var/log/wtmp /tmp $MINECRAFT_DIR
 
 WorkingDirectory=$MINECRAFT_DIR
 PIDFile=$PID_FILE
@@ -144,8 +141,11 @@ ExecStart=$SERVICE_SH start
 ExecReload=$SERVICE_SH reload
 ExecStop=$SERVICE_SH stop
 
+# No private /tmp or else the tmux socket/session inside can't be attached externally
+PrivateTmp=no
+
 Restart=on-failure
-RestartSec=10s
+RestartSec=20s
 
 [Install]
 WantedBy=multi-user.target
