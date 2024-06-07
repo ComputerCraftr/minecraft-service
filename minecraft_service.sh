@@ -31,7 +31,7 @@ minecraft_start() {
         echo "Minecraft server started in detached tmux session '$TMUX_SESSION'."
         pid=$(run_as_minecraft_user "$TMUX_PATH -L $TMUX_SOCKET list-panes -t $TMUX_SESSION -F '#{pane_pid}'")
         if [ "$(echo "$pid" | wc -l)" -ne 1 ]; then
-            echo "Could not determine PID, multiple active sessions"
+            echo "Failed to determine server PID, multiple active tmux sessions."
             return 1
         fi
         printf "%s" "$pid" >"$PID_FILE"
@@ -51,8 +51,13 @@ issue_cmd() {
 
 minecraft_stop() {
     if ! session_running; then
-        echo "Server is not running!"
-        return 1
+        echo "The server is already stopped."
+        if [ -f "$PID_FILE" ]; then
+            rm "$PID_FILE"
+            return $?  # Return the status of the rm command
+        else
+            return 0  # Return 0 if the PID file does not exist
+        fi
     fi
 
     # Warn players with a 20-second countdown
@@ -68,7 +73,7 @@ minecraft_stop() {
     # Issue the stop command
     echo "Stopping server..."
     if ! issue_cmd "stop"; then
-        echo "Failed to send stop command to server"
+        echo "Failed to send stop command to server."
         return 1
     fi
 
@@ -79,14 +84,18 @@ minecraft_stop() {
         sleep 1
         wait=$((wait + 1))
         if [ $wait -gt 60 ]; then
-            echo "Could not stop server, timeout"
+            echo "Timed out waiting for server to stop."
             return 1
         fi
     done
 
     echo "Server stopped successfully."
-    [ -f "$PID_FILE" ] && rm "$PID_FILE"
-    return 0
+    if [ -f "$PID_FILE" ]; then
+        rm "$PID_FILE"
+        return $?  # Return the status of the rm command
+    else
+        return 0  # Return 0 if the PID file does not exist
+    fi
 }
 
 minecraft_log() {
