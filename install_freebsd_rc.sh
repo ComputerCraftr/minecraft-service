@@ -56,25 +56,32 @@ echo "Appending necessary paths to the configuration file..."
 # shellcheck source=minecraft_config.sh
 . "$CONFIG_FILE"
 
-# Step 4: Create the Minecraft user and directory
+# Step 4: Create the Minecraft user and group
 if ! id -u "$MINECRAFT_USER" >/dev/null 2>&1; then
     echo "Creating Minecraft user..."
-    sudo pw user add "$MINECRAFT_USER" -m -s /bin/sh -c "Minecraft Server User"
+    sudo pw useradd -n "$MINECRAFT_USER" -s /bin/sh -d "$MINECRAFT_DIR" -c "Minecraft Server User" -m -w no -q
 else
     echo "User $MINECRAFT_USER already exists."
 fi
 
+# Check if the group exists and add the user to it
 if ! getent group "$MINECRAFT_GROUP" >/dev/null 2>&1; then
-    sudo pw groupadd "$MINECRAFT_GROUP"
+    echo "Creating Minecraft group and adding user to it..."
+    sudo pw groupadd "$MINECRAFT_GROUP" -q
+    sudo pw groupmod "$MINECRAFT_GROUP" -m "$MINECRAFT_USER" -q
+else
+    echo "Group $MINECRAFT_GROUP already exists. Adding user to group..."
+    sudo pw groupmod "$MINECRAFT_GROUP" -m "$MINECRAFT_USER" -q
 fi
 
+# Ensure the Minecraft server directory exists and is owned by the Minecraft user and group
 if [ ! -d "$MINECRAFT_DIR" ]; then
     echo "Creating Minecraft server directory..."
     sudo mkdir -p "$MINECRAFT_DIR"
-    sudo chown -R "$MINECRAFT_USER":"$MINECRAFT_GROUP" "$MINECRAFT_DIR"
-else
-    echo "Minecraft server directory already exists."
 fi
+
+echo "Setting ownership of the Minecraft server directory..."
+sudo chown -R "$MINECRAFT_USER":"$MINECRAFT_GROUP" "$MINECRAFT_DIR"
 
 # Step 5: Download Minecraft server jar if not in -nodownload mode
 if [ $NODOWNLOAD -eq 0 ]; then
