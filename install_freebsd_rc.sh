@@ -82,6 +82,7 @@ fi
 
 echo "Setting ownership of the Minecraft server directory..."
 sudo chown -R "$MINECRAFT_USER":"$MINECRAFT_GROUP" "$MINECRAFT_DIR"
+sudo chmod 755 "$MINECRAFT_DIR"
 
 # Step 5: Download Minecraft server jar if not in -nodownload mode
 if [ $NODOWNLOAD -eq 0 ]; then
