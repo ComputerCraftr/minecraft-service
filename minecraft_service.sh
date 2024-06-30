@@ -27,7 +27,7 @@ minecraft_start() {
 
     if ! session_running; then
         echo "Starting Minecraft server..."
-        run_as_minecraft_user "$TMUX_PATH -L $TMUX_SOCKET new-session -d -s $TMUX_SESSION -c $MINECRAFT_DIR $MINECRAFT_COMMAND"
+        run_as_minecraft_user "$TMUX_PATH -L $TMUX_SOCKET new-session -d -s $TMUX_SESSION -c $MINECRAFT_DIR \"$MINECRAFT_COMMAND\""
         echo "Minecraft server started in detached tmux session '$TMUX_SESSION'."
         pid=$(run_as_minecraft_user "$TMUX_PATH -L $TMUX_SOCKET list-panes -t $TMUX_SESSION -F '#{pane_pid}'")
         if [ "$(echo "$pid" | wc -l)" -ne 1 ]; then
@@ -54,9 +54,9 @@ minecraft_stop() {
         echo "The server is already stopped."
         if [ -f "$PID_FILE" ]; then
             rm "$PID_FILE"
-            return $?  # Return the status of the rm command
+            return $? # Return the status of the rm command
         else
-            return 0  # Return 0 if the PID file does not exist
+            return 0 # Return 0 if the PID file does not exist
         fi
     fi
 
@@ -92,9 +92,9 @@ minecraft_stop() {
     echo "Server stopped successfully."
     if [ -f "$PID_FILE" ]; then
         rm "$PID_FILE"
-        return $?  # Return the status of the rm command
+        return $? # Return the status of the rm command
     else
-        return 0  # Return 0 if the PID file does not exist
+        return 0 # Return 0 if the PID file does not exist
     fi
 }
 

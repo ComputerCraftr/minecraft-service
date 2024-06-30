@@ -56,7 +56,8 @@ echo "Appending necessary paths to the configuration file..."
     echo 'SERVICE_SCRIPT="/usr/local/etc/rc.d/minecraft"'
     echo "TMUX_PATH=$(command -v tmux)"
     echo "JAVA_PATH=$(command -v java)"
-    echo "MINECRAFT_COMMAND=\"\$JAVA_PATH -Xmx\$MEMORY_ALLOCATION -Xms\$INITIAL_MEMORY -jar \$MINECRAFT_JAR nogui\""
+    echo "MEM_LIMIT=\$((\$(echo \"\$MEMORY_ALLOCATION\" | grep -o '[0-9]*') + 2))000000"
+    echo "MINECRAFT_COMMAND=\"ulimit -n 8192 && ulimit -u 256 && ulimit -v \$MEM_LIMIT && exec \$JAVA_PATH -Xmx\$MEMORY_ALLOCATION -Xms\$INITIAL_MEMORY -jar \$MINECRAFT_JAR nogui\""
 } >>"$CONFIG_FILE"
 
 # Source the configuration file
