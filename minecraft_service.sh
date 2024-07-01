@@ -27,7 +27,7 @@ minecraft_start() {
 
     if ! session_running; then
         echo "Starting Minecraft server..."
-        run_as_minecraft_user "$TMUX_PATH -L $TMUX_SOCKET new-session -d -s $TMUX_SESSION -c $MINECRAFT_DIR \"$MINECRAFT_COMMAND\""
+        run_as_minecraft_user "$TMUX_PATH -L $TMUX_SOCKET new-session -d -s $TMUX_SESSION -c $MINECRAFT_DIR \"$START_COMMAND\""
         echo "Minecraft server started in detached tmux session '$TMUX_SESSION'."
         pid=$(run_as_minecraft_user "$TMUX_PATH -L $TMUX_SOCKET list-panes -t $TMUX_SESSION -F '#{pane_pid}'")
         if [ "$(echo "$pid" | wc -l)" -ne 1 ]; then

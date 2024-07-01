@@ -57,7 +57,9 @@ echo "Appending necessary paths to the configuration file..."
     echo "TMUX_PATH=$(command -v tmux)"
     echo "JAVA_PATH=$(command -v java)"
     echo "MEM_LIMIT=\$((\$(echo \"\$MEMORY_ALLOCATION\" | grep -o '[0-9]*') + 2))000000"
-    echo "MINECRAFT_COMMAND=\"ulimit -n 8192 && ulimit -u 256 && ulimit -v \$MEM_LIMIT && exec \$JAVA_PATH -Xmx\$MEMORY_ALLOCATION -Xms\$INITIAL_MEMORY -jar \$MINECRAFT_JAR nogui\""
+    echo "RESOURCE_LIMIT_COMMAND=\"ulimit -n 8192 && ulimit -u 256 && ulimit -v \$MEM_LIMIT\""
+    echo "MINECRAFT_COMMAND=\"exec \$JAVA_PATH -Xmx\$MEMORY_ALLOCATION -Xms\$INITIAL_MEMORY -jar \$MINECRAFT_JAR nogui\""
+    echo "START_COMMAND=\"\$RESOURCE_LIMIT_COMMAND && \$MINECRAFT_COMMAND\""
 } >>"$CONFIG_FILE"
 
 # Source the configuration file
