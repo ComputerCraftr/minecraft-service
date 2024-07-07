@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Exit on errors, undefined variables, and pipe failures
-set -euo pipefail
+# Exit on errors and undefined variables
+set -eu
 IFS=$'\n\t'
 
 # Ensure the script is run as root

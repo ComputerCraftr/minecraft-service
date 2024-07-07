@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# Exit on errors, undefined variables, and pipe failures
-set -euo pipefail
+# Exit on errors and undefined variables
+set -eu
 
 # Define the location of the config file
 CONFIG_FILE="/etc/minecraft_config.sh"
